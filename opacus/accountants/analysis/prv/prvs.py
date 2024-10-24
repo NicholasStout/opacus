@@ -75,6 +75,23 @@ class PoissonSubsampledGaussianPRV:
 
     def rdp(self, alpha: float) -> float:
         return _compute_rdp(self.sample_rate, self.noise_multiplier, alpha)
+        
+class LMO_PRV:
+    def __init__(self, sample_rate: float, noise_multiplier: float, sensitivity: float, moment: float) -> None:
+        self.sample_rate = sample_rate
+        self.noise_multiplier = noise_multiplier
+        self.sensitivity = sensitivity
+        self.moment = moment
+        
+    def M_u(self, scale: float, noise):
+        pass
+        
+    def M_p(self, scale: float):
+        pass
+    
+    def curve(self):
+        numerator = ((self.moment+1)*M_p(self.moment*self.sensitivity))#+(self.sensitivity*M_p(-1*())
+        denomenator = (2*self.moment+1)*math.exp(self.moment*
 
 
 # though we have only implemented the PoissonSubsampledGaussianPRV, this truncated prv
