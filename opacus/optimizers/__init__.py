@@ -21,12 +21,14 @@ from .ddpoptimizer import DistributedDPOptimizer
 from .ddpoptimizer_fast_gradient_clipping import (
     DistributedDPOptimizerFastGradientClipping,
 )
+from .LMODPOptimizer import PLRVDPOptimizer
 from .optimizer import DPOptimizer
 from .optimizer_fast_gradient_clipping import DPOptimizerFastGradientClipping
 from .perlayeroptimizer import DPPerLayerOptimizer
 
 
 __all__ = [
+    "PLRVDPOptimizer"
     "AdaClipDPOptimizer",
     "DistributedPerLayerOptimizer",
     "DistributedDPOptimizer",
@@ -49,7 +51,7 @@ def get_optimizer_class(clipping: str, distributed: bool, grad_sample_mode: str 
                 f"Unsupported combination of parameters. Clipping: {clipping} and grad_sample_mode: {grad_sample_mode}"
             )
     elif clipping == "flat" and distributed is False:
-        return DPOptimizer
+        return PLRVDPOptimizer
     elif clipping == "flat" and distributed is True:
         return DistributedDPOptimizer
     elif clipping == "per_layer" and distributed is False:

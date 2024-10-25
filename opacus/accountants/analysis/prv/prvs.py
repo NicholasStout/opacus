@@ -91,7 +91,7 @@ class LMO_PRV:
     
     def curve(self):
         numerator = ((self.moment+1)*M_p(self.moment*self.sensitivity))#+(self.sensitivity*M_p(-1*())
-        denomenator = (2*self.moment+1)*math.exp(self.moment*
+        denomenator = (2*self.moment+1)*math.exp(self.moment)
 
 
 # though we have only implemented the PoissonSubsampledGaussianPRV, this truncated prv

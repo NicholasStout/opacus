@@ -1,35 +1,64 @@
 import math
+import numpy as np
+import warnings
+from scipy.stats import truncnorm
 
-def _compute_rdp
+def _compute_rdp(args):
+  return convert_mgf_rdp(args)
 
-def convert_mgf_rdp(gamma):
-    return gamma+1, mgf(gamma)/gamma
+def convert_mgf_rdp(args):
+    moment = args["moment"]
+    return moment+1, maf(args)/moment
     
-def maf(gamma,  epsilon):
-    numer = (gamma+1)*M_p(gamma*self.max_grad_norm)#+(gamma*M_p(-1*(gamma+1)*self.max_grad_norm)
-    denom = ((2*gamma)+1)*math.exp(gamma*epsilon)
-    return math.log10(numer/denom)
+def maf(args):
+    moment = args["moment"]
+    epsilon = args["epsilon"]
+    clip = args["max_grad_norm"]
+    numer = (moment+1)*M_p(args, moment*clip)+(moment*M_p(args, -1*(moment+1)*clip))
+    denom = ((2*moment)+1)#*math.exp(moment*epsilon)
+    print(math.exp(moment*epsilon))
+    return math.log2(numer/denom)
     
 def M_u():
     pass
 
-def M_p(evaluate):
-    return mgf_gamma()+mgf_normal()+mgf_uniform()
+def M_p(args, moment):
+    theta = args["theta"]
+    k = args['k']
+    mu = args['mu']
+    sigma = args['sigma']
+    a = args['a']
+    b = args['b']
+    
+    return (mgf_gamma(moment, theta, k))#*mgf_truncated_normal(moment, mu, sigma)*mgf_uniform(moment, a, b)))
     
 def mgf_gamma(moment, theta, k):
-    return pow(1-moment*(1/theta)), -1*k)
+    return pow(1-moment*(1/theta), -1*k)
 
-def mgf_normal(moment, mu, sigmaSqr):
-    return math.exp((moment*mu)+(0.5*sigmaSqr*pow(moment, 2)))
+def mgf_truncated_normal(l, u, mu, sigma, t):
+    # Calculate the lower and upper bounds of the truncated normal
+    a_scaled = (l - mu) / sigma
+    b_scaled = (u - mu) / sigma
+
+    # Calculate the normalization constant
+    Z = truncnorm.pdf(a_scaled, 0, 1) - truncnorm.pdf(b_scaled, 0, 1)
+    
+    # Calculate the MGF
+    def integrand(x):
+        return np.exp(t * (mu + sigma * x)) * truncnorm.pdf(x, a_scaled, b_scaled)
+
+    # Integrate the MGF using numerical integration
+    mgf = (1 / Z) * (truncnorm.expect(lambda x: np.exp(t * (mu + sigma * x)), 
+                                        a=a_scaled, b=b_scaled))
+    
+    return mgf
     
 def mgf_uniform(moment, a, b):
     n = math.exp(moment*b) - math.exp(moment*a)
     d = moment*(b-a)
     return n/d
     
-def compute_rdp(
-    *, q: float, noise_multiplier: float, steps: int, orders: Union[List[float], float]
-) -> Union[List[float], float]:
+def compute_rdp(args, num_steps):
     r"""Computes Renyi Differential Privacy (RDP) guarantees of the
     Sampled Gaussian Mechanism (SGM) iterated ``steps`` times.
 
@@ -46,18 +75,15 @@ def compute_rdp(
     Returns:
         The RDP guarantees at all orders; can be ``np.inf``.
     """
-    if isinstance(orders, float):
-        rdp = _compute_rdp(q, noise_multiplier, orders)
-    else:
-        rdp = np.array([_compute_rdp(q, noise_multiplier, order) for order in orders])
+    alpha, rdp = _compute_rdp(args)
 
-    return rdp * steps
+    return alpha, rdp * num_steps
 
 
 def get_privacy_spent(
-    *, orders: Union[List[float], float], rdp: Union[List[float], float], delta: float
-) -> Tuple[float, float]:
-    r"""Computes epsilon given a list of Renyi Differential Privacy (RDP) values at
+    *, orders: float, rdp, delta: float
+):
+    r"""Computes epsilon given a list of Renyi Differential Privacy (RDP) values atS
     multiple RDP orders and target ``delta``.
     The computation of epslion, i.e. conversion from RDP to (eps, delta)-DP,
     is based on the theorem presented in the following work:
@@ -74,6 +100,7 @@ def get_privacy_spent(
         ValueError
             If the lengths of ``orders`` and ``rdp`` are not equal.
     """
+    #orders = [orders] * len(rdp)
     orders_vec = np.atleast_1d(orders)
     rdp_vec = np.atleast_1d(rdp)
 
@@ -89,7 +116,7 @@ def get_privacy_spent(
         - (np.log(delta) + np.log(orders_vec)) / (orders_vec - 1)
         + np.log((orders_vec - 1) / orders_vec)
     )
-
+    
     # special case when there is no privacy
     if np.isnan(eps).all():
         return np.inf, np.nan

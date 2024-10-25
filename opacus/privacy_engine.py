@@ -28,7 +28,7 @@ from opacus.grad_sample import (
     get_gsm_class,
     wrap_model,
 )
-from opacus.optimizers import DPOptimizer, get_optimizer_class
+from opacus.optimizers import DPOptimizer, get_optimizer_class, LMODPOptimizer
 from opacus.schedulers import _GradClipScheduler, _NoiseScheduler
 from opacus.utils.fast_gradient_clipping_utils import DPLossFastGradientClipping
 from opacus.validators.module_validator import ModuleValidator
@@ -62,7 +62,7 @@ class PrivacyEngine:
         >>> # continue training as normal
     """
 
-    def __init__(self, *, accountant: str = "prv", secure_mode: bool = False):
+    def __init__(self, *, accountant: str = "rdp_plrv", secure_mode: bool = False):
         """
 
         Args:

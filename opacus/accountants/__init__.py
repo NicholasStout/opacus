@@ -16,18 +16,22 @@ from .accountant import IAccountant
 from .gdp import GaussianAccountant
 from .prv import PRVAccountant
 from .rdp import RDPAccountant
+from .rdp_PLRV import RDP_PLRVAccountant
 
 
 __all__ = [
     "IAccountant",
     "GaussianAccountant",
     "RDPAccountant",
+    "RDP_PLRVAccountant",
 ]
 
 
 def create_accountant(mechanism: str) -> IAccountant:
     if mechanism == "rdp":
         return RDPAccountant()
+    if mechanism == "rdp_plrv":
+        return RDP_PLRVAccountant()
     elif mechanism == "gdp":
         return GaussianAccountant()
     elif mechanism == "prv":
