@@ -16,7 +16,7 @@ def maf(args):
     clip = args["max_grad_norm"]
     numer = (moment+1)*M_p(args, moment*clip)+(moment*M_p(args, -1*(moment+1)*clip))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
-    print(math.exp(moment*epsilon))
+    print(M_p(args, moment*clip))
     return math.log2(numer/denom)
     
 def M_u():
@@ -33,7 +33,9 @@ def M_p(args, moment):
     return (mgf_gamma(moment, theta, k))#*mgf_truncated_normal(moment, mu, sigma)*mgf_uniform(moment, a, b)))
     
 def mgf_gamma(moment, theta, k):
-    return pow(1-moment*(1/theta), -1*k)
+    if moment >= 1/theta:
+         raise Exception("moment must be greater than 1/theta")
+    return pow(1-moment*(theta), -1*k)
 
 def mgf_truncated_normal(l, u, mu, sigma, t):
     # Calculate the lower and upper bounds of the truncated normal
@@ -76,7 +78,8 @@ def compute_rdp(args, num_steps):
         The RDP guarantees at all orders; can be ``np.inf``.
     """
     alpha, rdp = _compute_rdp(args)
-
+    #print(rdp)
+    
     return alpha, rdp * num_steps
 
 

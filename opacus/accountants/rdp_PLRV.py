@@ -23,11 +23,10 @@ class RDP_PLRVAccountant(IAccountant):
 
     def __init__(self):
         super().__init__()
-        self.history = []
         self.args = {
-            "moment":1,
-            "theta":2,
-            'k':0,
+            "moment":10,
+            "theta":0.01,
+            'k':2,
             'mu':0,
             'sigma':0,
             'a':0,
@@ -62,8 +61,8 @@ class RDP_PLRVAccountant(IAccountant):
         
         best_alpha = 0
         epsis = []
-        print(self.history)
-        for args, num_steps in self.history:
+        #print(self.history)
+        for (args, num_steps) in self.history:
             _alpha, epsi = privacy_analysis.compute_rdp(
                   args = args,
                   num_steps=num_steps,
