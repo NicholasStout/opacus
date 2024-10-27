@@ -17,7 +17,7 @@ def maf(args):
     clip = args["max_grad_norm"]
     numer = (moment+1)*M_p(args, moment*clip)+(moment*M_p(args, -1*(moment+1)*clip))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
-    print(numer)
+    #print(numer)
     return math.log(numer/denom)
     
 def M_u():
@@ -32,7 +32,7 @@ def M_p(args, moment):
     b = args['b']
     l = args['l']
     u = args['u']
-    print(mgf_truncated_normal(l, u, mu, sigma, moment))
+    #print(mgf_truncated_normal(l, u, mu, sigma, moment))
     return mgf_truncated_normal(l, u, mu, sigma, moment)#(mgf_gamma(moment, theta, k))#*mgf_uniform(moment, a, b)
     
 def mgf_gamma(moment, theta, k):
