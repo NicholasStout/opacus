@@ -1,0 +1,15 @@
+{
+    "a1": 0.1,
+    "a3": 0.1,
+    "a4": 0.9,
+    "G_theta": 2,
+    "G_k": 2,
+    "E_lambda": 1,
+    "U_b": 2,
+    "U_a": 1,
+    "distributions": [
+        "Gamma",
+        "Exponential",
+        "Uniform"
+    ]
+}

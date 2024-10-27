@@ -1,0 +1,4 @@
+DEFAULT_DELTA = 1e-10
+MAX_ORDER = 128
+
+

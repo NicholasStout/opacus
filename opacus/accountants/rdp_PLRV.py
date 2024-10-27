@@ -23,17 +23,7 @@ class RDP_PLRVAccountant(IAccountant):
 
     def __init__(self):
         super().__init__()
-        self.args = {
-            "moment":10,
-            "theta":0.01,
-            'k':2,
-            'mu':0,
-            'sigma':0,
-            'a':0,
-            'b':0,
-            'epsilon':1/60000,
-            'max_grad_norm':2,
-        }
+        self.args = {}
 
     def step(self, noise_multiplier, sample_rate):
         if len(self.history) >= 1:

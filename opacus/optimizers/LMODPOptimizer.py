@@ -7,29 +7,38 @@ from torch import stack, zeros, einsum
 from opacus.optimizers.utils import params
 from torch import nn
 from torch.optim import Optimizer
+from scipy.stats import truncnorm
 
 class PLRVDPOptimizer(DPOptimizer):
     """
     Implementation of PLRV first noise mechanism.
     """
-    
-    
-    def add_noise(self):
-        self.k = 2
-        self.theta = 2
-        self.mu = 1
-        self.sigma = 1
-        self.a = 1
-        self.b = 1.1
+        
+    def make_noise(self, args):
+        self.args = args
+        self.k = self.args['k']
+        self.theta = self.args['theta']
+        self.mu = self.args['mu']
+        self.sigma = self.args['sigma']
+        self.a = self.args['a']
+        self.b = self.args['b']
+        self.l = self.args['l']
+        self.u = self.args['u']
+        self.clip = self.args['max_grad_norm']
+        
+        a_transformed, b_transformed = (self.l - self.mu) / self.sigma, (self.u - self.mu) / self.sigma
+        
         self.gamma = Gamma(
           concentration = self.k, rate = self.theta
           )
-        self.normal= Normal(
-          loc = self.mu, scale = self.sigma
+        self.normal= rv = truncnorm(
+          a_transformed, b_transformed, loc=self.mu, scale=self.sigma
           )
         self.uniform = Uniform(
           low = self.a, high = self.b
           )
+    
+    def add_noise(self):
           
         for p in self.params:
             _check_processed_flag(p.summed_grad)
@@ -41,16 +50,13 @@ class PLRVDPOptimizer(DPOptimizer):
             _mark_as_processed(p.summed_grad)
             
     def get_linear_combination(self):
-        #gauss_sample = self.normal.sample()
-        #if gauss_sample < self.l:
-        #  gauss_sample = self.l
-        #elif gauss_sample < self.u:
-        #  gauss_sample = self.u
-          
-        return (self.gamma.sample())#+self.normal.sample()+self.uniform.sample())
+        gam = self.gamma.sample()
+        uni = self.uniform.sample()
+        t_norm = self.normal.rvs(size=1)[0]  
+        return 1/(t_norm)#+uni+t_norm)
         
     def get_laplace(self):
-        return Laplace(loc=0, scale=self.get_linear_combination() * self.max_grad_norm)
+        return Laplace(loc=0, scale=self.get_linear_combination())
         
     def clip_and_accumulate(self):
         """

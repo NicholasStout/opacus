@@ -402,6 +402,8 @@ class PrivacyEngine:
         optimizer.attach_step_hook(
             self.accountant.get_optimizer_hook_fn(sample_rate=sample_rate)
         )
+        if "PLRV" in str(type(self.accountant)):
+          optimizer.make_noise(self.args)
         if grad_sample_mode == "ghost":
             criterion = DPLossFastGradientClipping(
                 module, optimizer, criterion, loss_reduction
@@ -482,6 +484,32 @@ class PrivacyEngine:
                 equivalent to the original data loader, possibly with updated
                 sampling mechanism. Points to the same dataset object.
         """
+        if "PLRV" in str(type(self.accountant)):
+          self.args = self.get_PLRV_args(target_epsilon, target_delta, epochs, max_grad_norm)
+          self.accountant.args =self. args
+          if len(self.accountant) > 0:
+            warnings.warn(
+                "You're calling make_private_with_epsilon with non-zero privacy budget "
+                "already spent. Returned noise_multiplier assumes zero starting point, "
+                "so your overall privacy budget will be higher."
+            )
+            
+          return self.make_private (
+            module=module,
+            optimizer=optimizer,
+            data_loader=data_loader,
+            criterion=criterion,
+            max_grad_norm=max_grad_norm,
+            batch_first=batch_first,
+            loss_reduction=loss_reduction,
+            noise_generator=noise_generator,
+            grad_sample_mode=grad_sample_mode,
+            poisson_sampling=poisson_sampling,
+            clipping=clipping,
+            **kwargs,
+            )
+                    
+        
         sample_rate = 1 / len(data_loader)
 
         if len(self.accountant) > 0:
@@ -605,3 +633,18 @@ class PrivacyEngine:
             grad_clip_scheduler.load_state_dict(grad_clip_scheduler_state_dict)
 
         return checkpoint
+        
+    def get_PLRV_args(self, epsilon, delta, epochs, clip):
+      return {
+            "moment":4,
+            "theta":0.06,
+            'k':0.00001,
+            'mu':2.75,
+            'sigma':0.82,
+            'a':0.77,
+            'b':1.98,
+            'u':2.86,
+            'l':2.37,
+            'epsilon':epsilon/epochs*1000,
+            'max_grad_norm': clip,
+        }

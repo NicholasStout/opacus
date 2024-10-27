@@ -1,0 +1,5 @@
+# Yu
+python3 run_exp.py --gpu_id 0 --task SST-2 --k 16 --eps 3 --delta 1e-10 --clip 1. --accountant moments --batch_size 2000 --lr 0.0005 --epoch 20  --sess lora_bertx_debug --arch roberta.large  --to_console --fp32 2>&1 > ../../../../running_logs/table3.sst-2.Yu.eps_3.log &
+python3 run_exp.py --gpu_id 1 --task SST-2 --k 16 --eps 1.4 --delta 1e-10 --clip 1. --accountant moments --batch_size 2000 --lr 0.0005 --epoch 20  --sess lora_bertx_debug --arch roberta.large  --to_console --fp32 2>&1 > ../../../../running_logs/table3.sst-2.Yu.eps_1.4.log &
+python3 run_exp.py --gpu_id 2 --task SST-2 --k 16 --eps 0.9 --delta 1e-10 --clip 1. --accountant moments --batch_size 2000 --lr 0.0005 --epoch 20  --sess lora_bertx_debug --arch roberta.large  --to_console --fp32 2>&1 > ../../../../running_logs/table3.sst-2.Yu.eps_0.9.log &
+python3 run_exp.py --gpu_id 3 --task SST-2 --k 16 --eps 0.3 --delta 1e-10 --clip 1. --accountant moments --batch_size 2000 --lr 0.0005 --epoch 20  --sess lora_bertx_debug --arch roberta.large  --to_console --fp32 2>&1 > ../../../../running_logs/table3.sst-2.Yu.eps_0.3.log &

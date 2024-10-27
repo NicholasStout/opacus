@@ -1,14 +1,15 @@
 import math
 import numpy as np
 import warnings
-from scipy.stats import truncnorm
+from scipy.stats import norm, truncnorm
 
 def _compute_rdp(args):
   return convert_mgf_rdp(args)
 
 def convert_mgf_rdp(args):
     moment = args["moment"]
-    return moment+1, maf(args)/moment
+    clip = args["max_grad_norm"]
+    return moment+1, maf(args)/(moment*clip)
     
 def maf(args):
     moment = args["moment"]
@@ -16,8 +17,8 @@ def maf(args):
     clip = args["max_grad_norm"]
     numer = (moment+1)*M_p(args, moment*clip)+(moment*M_p(args, -1*(moment+1)*clip))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
-    print(M_p(args, moment*clip))
-    return math.log2(numer/denom)
+    print(numer)
+    return math.log(numer/denom)
     
 def M_u():
     pass
@@ -29,31 +30,23 @@ def M_p(args, moment):
     sigma = args['sigma']
     a = args['a']
     b = args['b']
-    
-    return (mgf_gamma(moment, theta, k))#*mgf_truncated_normal(moment, mu, sigma)*mgf_uniform(moment, a, b)))
+    l = args['l']
+    u = args['u']
+    print(mgf_truncated_normal(l, u, mu, sigma, moment))
+    return mgf_truncated_normal(l, u, mu, sigma, moment)#(mgf_gamma(moment, theta, k))#*mgf_uniform(moment, a, b)
     
 def mgf_gamma(moment, theta, k):
     if moment >= 1/theta:
-         raise Exception("moment must be greater than 1/theta")
+         raise Exception("moment must be less than 1/theta")
     return pow(1-moment*(theta), -1*k)
 
 def mgf_truncated_normal(l, u, mu, sigma, t):
-    # Calculate the lower and upper bounds of the truncated normal
-    a_scaled = (l - mu) / sigma
-    b_scaled = (u - mu) / sigma
-
-    # Calculate the normalization constant
-    Z = truncnorm.pdf(a_scaled, 0, 1) - truncnorm.pdf(b_scaled, 0, 1)
+    alpha = (l - mu) / sigma
+    beta = (u - mu) / sigma
+    num = norm.cdf(beta - sigma * t) - norm.cdf(alpha - sigma * t)
+    den = norm.cdf(beta) - norm.cdf(alpha)
+    return np.exp((mu * t + 0.5 * sigma ** 2 * t ** 2)/2) * num / den
     
-    # Calculate the MGF
-    def integrand(x):
-        return np.exp(t * (mu + sigma * x)) * truncnorm.pdf(x, a_scaled, b_scaled)
-
-    # Integrate the MGF using numerical integration
-    mgf = (1 / Z) * (truncnorm.expect(lambda x: np.exp(t * (mu + sigma * x)), 
-                                        a=a_scaled, b=b_scaled))
-    
-    return mgf
     
 def mgf_uniform(moment, a, b):
     n = math.exp(moment*b) - math.exp(moment*a)

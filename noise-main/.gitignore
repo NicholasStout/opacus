@@ -1,0 +1,10 @@
+.DS_Store
+Thumbs.db
+
+*.log
+*.pyc
+*.bak
+*pycache*
+wandb
+
+.vscode
