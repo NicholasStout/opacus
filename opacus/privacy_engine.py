@@ -486,6 +486,7 @@ class PrivacyEngine:
         """
         if "PLRV" in str(type(self.accountant)):
           self.args = self.get_PLRV_args(target_epsilon, target_delta, epochs, max_grad_norm)
+          self.args['moment'] = target_epsilon
           self.accountant.args =self. args
           if len(self.accountant) > 0:
             warnings.warn(
@@ -636,15 +637,19 @@ class PrivacyEngine:
         
     def get_PLRV_args(self, epsilon, delta, epochs, clip):
       return {
-            "moment":4,
-            "theta":0.06,
-            'k':0.00001,
-            'mu':2.75,
-            'sigma':0.82,
-            'a':0.77,
-            'b':1.98,
-            'u':2.86,
-            'l':2.37,
+            "a1":0.1,
+            "a3":0.1,
+            "a4":0.1,
+            "lam":5,
+            "moment":1,
+            "theta":0.05,
+            'k':1,
+            'mu':0,
+            'sigma':0.1,
+            'a':0,
+            'b':1,
+            'u':1,
+            'l':0.1,
             'epsilon':epsilon/epochs*1000,
             'max_grad_norm': clip,
         }

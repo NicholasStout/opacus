@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import warnings
-from scipy.stats import norm, truncnorm
+from scipy.stats import norm, truncnorm, expon
 
 def _compute_rdp(args):
   return convert_mgf_rdp(args)
@@ -9,21 +9,24 @@ def _compute_rdp(args):
 def convert_mgf_rdp(args):
     moment = args["moment"]
     clip = args["max_grad_norm"]
-    return moment+1, maf(args)/(moment*clip)
+    return moment+1, maf(args)/(moment)
     
 def maf(args):
     moment = args["moment"]
     epsilon = args["epsilon"]
     clip = args["max_grad_norm"]
-    numer = (moment+1)*M_p(args, moment*clip)+(moment*M_p(args, -1*(moment+1)*clip))
+    numer = (moment+1)*M_p(args, moment)+(moment*M_p(args, -1*(moment+1)))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
-    print(numer)
+    #print(math.log(numer/denom))
     return math.log(numer/denom)
     
 def M_u():
     pass
 
 def M_p(args, moment):
+    a1 = args['a1']
+    a3 = args['a3']
+    a4 = args['a4']
     theta = args["theta"]
     k = args['k']
     mu = args['mu']
@@ -32,8 +35,10 @@ def M_p(args, moment):
     b = args['b']
     l = args['l']
     u = args['u']
-    print(mgf_truncated_normal(l, u, mu, sigma, moment))
-    return mgf_truncated_normal(l, u, mu, sigma, moment)#(mgf_gamma(moment, theta, k))#*mgf_uniform(moment, a, b)
+    lam = args['lam']
+    #print(mgf_truncated_normal(l, u, mu, sigma, moment))
+    #return mgf_truncated_normal(l, u, mu, sigma, moment)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
+    return mgf_expon(moment*a3, lam)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
     
 def mgf_gamma(moment, theta, k):
     if moment >= 1/theta:
@@ -43,9 +48,13 @@ def mgf_gamma(moment, theta, k):
 def mgf_truncated_normal(l, u, mu, sigma, t):
     alpha = (l - mu) / sigma
     beta = (u - mu) / sigma
-    num = norm.cdf(beta - sigma * t) - norm.cdf(alpha - sigma * t)
-    den = norm.cdf(beta) - norm.cdf(alpha)
+    num = truncnorm.cdf(beta - sigma * t, alpha, beta, loc=mu, scale=sigma) - truncnorm.cdf(alpha - sigma * t, alpha, beta, loc=mu, scale=sigma)
+    den = truncnorm.cdf(beta, alpha, beta, loc=mu, scale=sigma) - truncnorm.cdf(alpha, alpha, beta, loc=mu, scale=sigma)
     return np.exp((mu * t + 0.5 * sigma ** 2 * t ** 2)/2) * num / den
+    
+def mgf_expon(moment, lam):
+    paren = 1-moment*(1/lam)
+    return 1/paren
     
     
 def mgf_uniform(moment, a, b):

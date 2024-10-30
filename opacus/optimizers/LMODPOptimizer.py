@@ -7,7 +7,7 @@ from torch import stack, zeros, einsum
 from opacus.optimizers.utils import params
 from torch import nn
 from torch.optim import Optimizer
-from scipy.stats import truncnorm
+from scipy.stats import truncnorm, expon
 
 class PLRVDPOptimizer(DPOptimizer):
     """
@@ -25,18 +25,21 @@ class PLRVDPOptimizer(DPOptimizer):
         self.l = self.args['l']
         self.u = self.args['u']
         self.clip = self.args['max_grad_norm']
+        self.lam = self.args['lam']
         
         a_transformed, b_transformed = (self.l - self.mu) / self.sigma, (self.u - self.mu) / self.sigma
         
         self.gamma = Gamma(
           concentration = self.k, rate = self.theta
           )
-        self.normal= rv = truncnorm(
+        self.normal= truncnorm(
           a_transformed, b_transformed, loc=self.mu, scale=self.sigma
           )
         self.uniform = Uniform(
           low = self.a, high = self.b
           )
+        self.expon = expon(loc=0, scale = 1/self.lam)
+    
     
     def add_noise(self):
           
@@ -53,7 +56,8 @@ class PLRVDPOptimizer(DPOptimizer):
         gam = self.gamma.sample()
         uni = self.uniform.sample()
         t_norm = self.normal.rvs(size=1)[0]  
-        return 1/(t_norm)#+uni+t_norm)
+        exp = self.expon.rvs(size=1)[0]
+        return 1/(self.args['a1']*gam+self.args['a3']*exp+self.args['a4']*uni)
         
     def get_laplace(self):
         return Laplace(loc=0, scale=self.get_linear_combination())
@@ -73,7 +77,7 @@ class PLRVDPOptimizer(DPOptimizer):
             per_param_norms = [
                 g.reshape(len(g), -1).norm(1, dim=-1) for g in self.grad_samples
             ]
-            per_sample_norms = stack(per_param_norms, dim=1).norm(2, dim=1)
+            per_sample_norms = stack(per_param_norms, dim=1).norm(1, dim=1)
             per_sample_clip_factor = (
                 self.max_grad_norm / (per_sample_norms + 1e-6)
             ).clamp(max=1.0)
