@@ -17,7 +17,6 @@ def maf(args):
     clip = args["max_grad_norm"]
     numer = (moment+1)*M_p(args, moment)+(moment*M_p(args, -1*(moment+1)))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
-    #print(math.log(numer/denom))
     return math.log(numer/denom)
     
 def M_u():
