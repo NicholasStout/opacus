@@ -2,22 +2,27 @@ import math
 import numpy as np
 import warnings
 from scipy.stats import norm, truncnorm, expon
+from typing import List, Tuple, Union
 
-def _compute_rdp(args):
-  return convert_mgf_rdp(args)
+def _compute_rdp(args, order):
+  return convert_mgf_rdp(args, order)
 
-def convert_mgf_rdp(args):
-    moment = args["moment"]
+def convert_mgf_rdp(args, order):
+    moment = order - 1
     clip = args["max_grad_norm"]
-    return moment+1, maf(args)/(moment)
+    return maf(args, moment)/(moment)
     
-def maf(args):
-    moment = args["moment"]
+def maf(args, moment):
+    #moment = args["moment"]
     epsilon = args["epsilon"]
     clip = args["max_grad_norm"]
     numer = (moment+1)*M_p(args, moment)+(moment*M_p(args, -1*(moment+1)))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
-    return math.log(numer/denom)
+    try:
+        ret = math.log(numer/denom)
+    except:
+        ret = math.inf
+    return ret
     
 def M_u():
     pass
@@ -41,7 +46,8 @@ def M_p(args, moment):
     
 def mgf_gamma(moment, theta, k):
     if moment >= 1/theta:
-         raise Exception("moment must be less than 1/theta")
+        return math.inf
+        raise Exception("moment must be less than 1/theta")
     return pow(1-moment*(theta), -1*k)
 
 def mgf_truncated_normal(l, u, mu, sigma, t):
@@ -52,7 +58,9 @@ def mgf_truncated_normal(l, u, mu, sigma, t):
     return np.exp((mu * t + 0.5 * sigma ** 2 * t ** 2)/2) * num / den
     
 def mgf_expon(moment, lam):
-    paren = 1-moment*(1/lam)
+    paren = 1-(moment*(1/lam))
+    if paren == 0:
+        return math.inf
     return 1/paren
     
     
@@ -61,7 +69,8 @@ def mgf_uniform(moment, a, b):
     d = moment*(b-a)
     return n/d
     
-def compute_rdp(args, num_steps):
+def compute_rdp(args, num_steps, orders: Union[List[float], float]
+) -> Union[List[float], float]:
     r"""Computes Renyi Differential Privacy (RDP) guarantees of the
     Sampled Gaussian Mechanism (SGM) iterated ``steps`` times.
 
@@ -78,15 +87,19 @@ def compute_rdp(args, num_steps):
     Returns:
         The RDP guarantees at all orders; can be ``np.inf``.
     """
-    alpha, rdp = _compute_rdp(args)
+    #alpha, rdp = _compute_rdp(args)
     #print(rdp)
+    if isinstance(orders, float):
+        rdp = _compute_rdp(args, orders)
+    else:
+        rdp = np.array([_compute_rdp(args, order) for order in orders])
     
-    return alpha, rdp * num_steps
+    return rdp * num_steps
 
 
 def get_privacy_spent(
-    *, orders: float, rdp, delta: float
-):
+    *, orders: Union[List[float], float], rdp: Union[List[float], float], delta: float
+) -> Tuple[float, float]:
     r"""Computes epsilon given a list of Renyi Differential Privacy (RDP) values atS
     multiple RDP orders and target ``delta``.
     The computation of epslion, i.e. conversion from RDP to (eps, delta)-DP,

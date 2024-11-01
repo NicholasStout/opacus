@@ -57,7 +57,7 @@ class PLRVDPOptimizer(DPOptimizer):
         uni = self.uniform.sample()
         t_norm = self.normal.rvs(size=1)[0]  
         exp = self.expon.rvs(size=1)[0]
-        return 1/(self.args['a1']*gam+self.args['a3']*exp+self.args['a4']*uni)
+        return 1/((self.args['a1']*gam)+(self.args['a3']*exp)+(self.args['a4']*uni))
         
     def get_laplace(self):
         return Laplace(loc=0, scale=self.get_linear_combination())

@@ -121,8 +121,16 @@ class PrivacyEngine:
             generator = self.secure_rng
         elif noise_generator is not None:
             generator = noise_generator
-
-        optim_class = get_optimizer_class(
+        
+        if "PLRV" in str(type(self.accountant)):
+          optim_class = get_optimizer_class(
+              clipping=clipping,
+              distributed=distributed,
+              grad_sample_mode=grad_sample_mode,
+              PLRV = True,
+          )
+        else:
+          optim_class = get_optimizer_class(
             clipping=clipping,
             distributed=distributed,
             grad_sample_mode=grad_sample_mode,
@@ -136,7 +144,7 @@ class PrivacyEngine:
             loss_reduction=loss_reduction,
             generator=generator,
             secure_mode=self.secure_mode,
-            **kwargs,
+            #**kwargs,
         )
 
     def _prepare_data_loader(
@@ -486,8 +494,10 @@ class PrivacyEngine:
         """
         if "PLRV" in str(type(self.accountant)):
           self.args = self.get_PLRV_args(target_epsilon, target_delta, epochs, max_grad_norm)
-          self.args['moment'] = target_epsilon
-          self.accountant.args =self. args
+          for key, value in kwargs.items():
+            if "PLRV_args" in key:
+              self.args= value
+          self.accountant.args = self.args
           if len(self.accountant) > 0:
             warnings.warn(
                 "You're calling make_private_with_epsilon with non-zero privacy budget "
@@ -637,17 +647,17 @@ class PrivacyEngine:
         
     def get_PLRV_args(self, epsilon, delta, epochs, clip):
       return {
-            "a1":0.1,
-            "a3":0.1,
-            "a4":0.1,
+            "a1":0.5,
+            "a3":0.5,
+            "a4":0.5,
             "lam":5,
             "moment":1,
-            "theta":0.05,
-            'k':1,
+            "theta":5,
+            'k':0.5,
             'mu':0,
             'sigma':0.1,
             'a':0,
-            'b':1,
+            'b':16,
             'u':1,
             'l':0.1,
             'epsilon':epsilon/epochs*1000,

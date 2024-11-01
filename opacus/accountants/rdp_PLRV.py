@@ -51,18 +51,22 @@ class RDP_PLRVAccountant(IAccountant):
         
         best_alpha = 0
         epsis = []
-        #print(self.history)
-        for (args, num_steps) in self.history:
-            _alpha, epsi = privacy_analysis.compute_rdp(
-                  args = args,
-                  num_steps=num_steps,
+        
+        if alphas is None:
+            alphas = self.DEFAULT_ALPHAS
+        rdp = sum(
+            [
+                privacy_analysis.compute_rdp(
+                    args = args,
+                    num_steps=num_steps,
+                    orders=alphas,
                 )
-            best_alpha = _alpha
-            epsis.append(epsi)
-            
-        rdp = sum(epsis)
+                for (args, num_steps) in self.history
+            ]
+        )
         eps, best_alpha = privacy_analysis.get_privacy_spent(
-            orders=best_alpha, rdp=rdp, delta=delta)
+            orders=alphas, rdp=rdp, delta=delta
+        )
         return float(eps), float(best_alpha)
 
     def get_epsilon(
