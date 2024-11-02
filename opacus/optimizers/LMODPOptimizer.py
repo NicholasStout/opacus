@@ -8,11 +8,33 @@ from opacus.optimizers.utils import params
 from torch import nn
 from torch.optim import Optimizer
 from scipy.stats import truncnorm, expon
+from typing import Callable, Optional
 
 class PLRVDPOptimizer(DPOptimizer):
     """
     Implementation of PLRV first noise mechanism.
     """
+    
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        *,
+        noise_multiplier: float,
+        max_grad_norm: float,
+        expected_batch_size: Optional[int],
+        loss_reduction: str = "mean",
+        generator=None,
+        secure_mode: bool = False,
+    ):
+        super().__init__(
+            optimizer,
+            noise_multiplier=noise_multiplier,
+            max_grad_norm=max_grad_norm,
+            expected_batch_size=expected_batch_size,
+            loss_reduction=loss_reduction,
+            generator=generator,
+            secure_mode=secure_mode,
+        )
         
     def make_noise(self, args):
         self.args = args
@@ -39,10 +61,10 @@ class PLRVDPOptimizer(DPOptimizer):
           low = self.a, high = self.b
           )
         self.expon = expon(loc=0, scale = 1/self.lam)
+        #self.laplace = self.get_laplace()
     
     
     def add_noise(self):
-          
         for p in self.params:
             _check_processed_flag(p.summed_grad)
             
@@ -77,7 +99,7 @@ class PLRVDPOptimizer(DPOptimizer):
             per_param_norms = [
                 g.reshape(len(g), -1).norm(1, dim=-1) for g in self.grad_samples
             ]
-            per_sample_norms = stack(per_param_norms, dim=1).norm(1, dim=1)
+            per_sample_norms = stack(per_param_norms, dim=1).norm(2, dim=1)
             per_sample_clip_factor = (
                 self.max_grad_norm / (per_sample_norms + 1e-6)
             ).clamp(max=1.0)

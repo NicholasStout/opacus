@@ -496,7 +496,9 @@ class PrivacyEngine:
           self.args = self.get_PLRV_args(target_epsilon, target_delta, epochs, max_grad_norm)
           for key, value in kwargs.items():
             if "PLRV_args" in key:
-              self.args= value
+              self.args = value
+          
+          self.args['max_grad_norm'] = max_grad_norm
           self.accountant.args = self.args
           if len(self.accountant) > 0:
             warnings.warn(

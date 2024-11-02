@@ -3,14 +3,30 @@ import numpy as np
 import warnings
 from scipy.stats import norm, truncnorm, expon
 from typing import List, Tuple, Union
+from . import rdp as gaussian_analysis
 
 def _compute_rdp(args, order):
   return convert_mgf_rdp(args, order)
 
 def convert_mgf_rdp(args, order):
-    moment = order - 1
-    clip = args["max_grad_norm"]
-    return maf(args, moment)/(moment)
+#    moment = order - 1
+#    clip = args["max_grad_norm"]
+#    return maf(args, moment)/(moment)
+    try:
+        MGF1_1 = ((1-(args['a1']*(order-1)*args['theta']))**(-args['k']))  # Gamma
+        MGF1_3 = (args['lam']/(args['lam']-args['a3']*(order-1)))  # Exponential
+        MGF1_4 = ((np.exp(args['a4']*(order-1)*args['b'])-np.exp(args['a4']*(order-1)*args['a']))/(args['a4']*(order-1)*(args['b']-args['a'])))  # Uniform
+        MGF1 = MGF1_1 * MGF1_3 * MGF1_4
+        
+        MGF2_1 = ((1-args['a1']*(-order)*args['theta'])**(-args['k']))  # Gamma
+        MGF2_3 = (args['lam']/(args['lam']-args['a3']*(-order)))  # Exponential
+        MGF2_4 = ((np.exp(args['a4']*(-order)*args['b'])-np.exp(args['a4']*(-order)*args['a']))/(args['a4']*(-order)*(args['b']-args['a'])))  # Uniform
+        MGF2 = MGF2_1 * MGF2_3 * MGF2_4
+        
+        rdp_lmo_ = (1/(order-1)) * np.log((order*MGF1+(order-1)*MGF2)/(2*order-1))
+    except:
+        return math.inf
+    return rdp_lmo_
     
 def maf(args, moment):
     #moment = args["moment"]
@@ -42,7 +58,8 @@ def M_p(args, moment):
     lam = args['lam']
     #print(mgf_truncated_normal(l, u, mu, sigma, moment))
     #return mgf_truncated_normal(l, u, mu, sigma, moment)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
-    return mgf_expon(moment*a3, lam)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
+    return (mgf_expon(moment*a3, lam)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b))
+    #return (mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
     
 def mgf_gamma(moment, theta, k):
     if moment >= 1/theta:
@@ -88,13 +105,33 @@ def compute_rdp(args, num_steps, orders: Union[List[float], float]
         The RDP guarantees at all orders; can be ``np.inf``.
     """
     #alpha, rdp = _compute_rdp(args)
-    #print(rdp)
+    #print(num_steps)
+    if isinstance(orders, float):
+        rdp = _compute_rdp(args, orders)
+    else:
+        rdp = np.array([_compute_rdp(args, order) for order in orders])
+    return rdp * num_steps
+    
+def compute_rdp_subsample(args, num_steps, delta, orders: Union[List[float], float], sample_rate
+) -> Union[List[float], float]:
     if isinstance(orders, float):
         rdp = _compute_rdp(args, orders)
     else:
         rdp = np.array([_compute_rdp(args, order) for order in orders])
     
-    return rdp * num_steps
+    rens = []
+
+    for i in range(len(rdp)):
+        eps, best_alpha = get_privacy_spent(
+            orders=orders[i], rdp=rdp[i], delta=delta
+            )
+        sigma = np.sqrt((2*np.log(1.25/delta)*float(args['max_grad_norm'])**2)/float(eps)**2)
+        rens.append(gaussian_analysis._compute_rdp(sample_rate, sigma, best_alpha))
+    
+    np.array(rens)*num_steps
+    return np.array(rens)*num_steps
+        
+    
 
 
 def get_privacy_spent(

@@ -13,9 +13,10 @@
 # limitations under the License.
 
 from typing import List, Optional, Tuple, Union
-
+import numpy as np
 from .accountant import IAccountant
 from .analysis import rdp_plrv as privacy_analysis
+from .analysis import rdp as gaussian_analysis
 
 
 class RDP_PLRVAccountant(IAccountant):
@@ -26,6 +27,7 @@ class RDP_PLRVAccountant(IAccountant):
         self.args = {}
 
     def step(self, noise_multiplier, sample_rate):
+        self.sample_rate = sample_rate
         if len(self.history) >= 1:
             last_args, num_steps = self.history.pop()
             if (
@@ -56,17 +58,21 @@ class RDP_PLRVAccountant(IAccountant):
             alphas = self.DEFAULT_ALPHAS
         rdp = sum(
             [
-                privacy_analysis.compute_rdp(
+                privacy_analysis.compute_rdp_subsample(
                     args = args,
                     num_steps=num_steps,
+                    delta=delta,
                     orders=alphas,
+                    sample_rate=self.sample_rate,
                 )
                 for (args, num_steps) in self.history
             ]
         )
+        print(f"{len(alphas)}  {len(rdp)}")
         eps, best_alpha = privacy_analysis.get_privacy_spent(
             orders=alphas, rdp=rdp, delta=delta
         )
+        
         return float(eps), float(best_alpha)
 
     def get_epsilon(
