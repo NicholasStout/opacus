@@ -9,9 +9,10 @@ def _compute_rdp(args, order):
   return convert_mgf_rdp(args, order)
 
 def convert_mgf_rdp(args, order):
-#    moment = order - 1
-#    clip = args["max_grad_norm"]
-#    return maf(args, moment)/(moment)
+    moment = order - 1
+    moment=args['lam']
+    clip = args["max_grad_norm"]
+    return maf(args, moment)/(moment)
     try:
         MGF1_1 = ((1-(args['a1']*(order-1)*args['theta']))**(-args['k']))  # Gamma
         MGF1_3 = (args['lam']/(args['lam']-args['a3']*(order-1)))  # Exponential
@@ -23,13 +24,16 @@ def convert_mgf_rdp(args, order):
         MGF2_4 = ((np.exp(args['a4']*(-order)*args['b'])-np.exp(args['a4']*(-order)*args['a']))/(args['a4']*(-order)*(args['b']-args['a'])))  # Uniform
         MGF2 = MGF2_1 * MGF2_3 * MGF2_4
         
+        
         rdp_lmo_ = (1/(order-1)) * np.log((order*MGF1+(order-1)*MGF2)/(2*order-1))
+        
     except:
         return math.inf
     return rdp_lmo_
     
 def maf(args, moment):
     #moment = args["moment"]
+    #moment = args['lam']
     epsilon = args["epsilon"]
     clip = args["max_grad_norm"]
     numer = (moment+1)*M_p(args, moment)+(moment*M_p(args, -1*(moment+1)))
@@ -58,7 +62,7 @@ def M_p(args, moment):
     lam = args['lam']
     #print(mgf_truncated_normal(l, u, mu, sigma, moment))
     #return mgf_truncated_normal(l, u, mu, sigma, moment)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
-    return (mgf_expon(moment*a3, lam)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b))
+    return ((mgf_truncated_normal(l, u, mu, sigma, moment)**args['truncnorm'])*(mgf_gamma(moment*a1, theta, k)**args['gamma'])*(mgf_uniform(moment*a4, a, b)**args['uniform']))
     #return (mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
     
 def mgf_gamma(moment, theta, k):
@@ -125,7 +129,7 @@ def compute_rdp_subsample(args, num_steps, delta, orders: Union[List[float], flo
         eps, best_alpha = get_privacy_spent(
             orders=orders[i], rdp=rdp[i], delta=delta
             )
-        sigma = np.sqrt((2*np.log(1.25/delta)*float(args['max_grad_norm'])**2)/float(eps)**2)
+        sigma = np.sqrt((2*np.log(1.25/delta))**2)/(float(eps)**2)
         rens.append(gaussian_analysis._compute_rdp(sample_rate, sigma, best_alpha))
     
     np.array(rens)*num_steps

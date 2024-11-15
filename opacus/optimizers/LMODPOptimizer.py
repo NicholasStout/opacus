@@ -47,7 +47,10 @@ class PLRVDPOptimizer(DPOptimizer):
         self.l = self.args['l']
         self.u = self.args['u']
         self.clip = self.args['max_grad_norm']
-        self.lam = self.args['lam']
+        self.use_gam = self.args['gamma']
+        self.use_truncnorm = self.args['truncnorm']
+        self.use_uniform = self.args['uniform']
+        #self.lam = self.args['lam']
         
         a_transformed, b_transformed = (self.l - self.mu) / self.sigma, (self.u - self.mu) / self.sigma
         
@@ -60,7 +63,7 @@ class PLRVDPOptimizer(DPOptimizer):
         self.uniform = Uniform(
           low = self.a, high = self.b
           )
-        self.expon = expon(loc=0, scale = 1/self.lam)
+        #self.expon = expon(loc=0, scale = 1/self.lam)
         #self.laplace = self.get_laplace()
     
     
@@ -78,8 +81,9 @@ class PLRVDPOptimizer(DPOptimizer):
         gam = self.gamma.sample()
         uni = self.uniform.sample()
         t_norm = self.normal.rvs(size=1)[0]  
-        exp = self.expon.rvs(size=1)[0]
-        return 1/((self.args['a1']*gam)+(self.args['a3']*exp)+(self.args['a4']*uni))
+        #exp = self.expon.rvs(size=1)[0]
+        #return 1/((self.args['a1']*gam)+(self.args['a3']*exp)+(self.args['a4']*uni))
+        return 1/((gam*self.use_gam)+(uni*self.use_uniform)+(t_norm*self.use_truncnorm))
         
     def get_laplace(self):
         return Laplace(loc=0, scale=self.get_linear_combination())
