@@ -36,6 +36,7 @@ def maf(args, moment):
     #moment = args['lam']
     epsilon = args["epsilon"]
     clip = args["max_grad_norm"]
+    return math.log(M_p(args, moment*clip))
     numer = (moment+1)*M_p(args, moment)+(moment*M_p(args, -1*(moment+1)))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
     try:
@@ -62,7 +63,7 @@ def M_p(args, moment):
     lam = args['lam']
     #print(mgf_truncated_normal(l, u, mu, sigma, moment))
     #return mgf_truncated_normal(l, u, mu, sigma, moment)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
-    return ((mgf_truncated_normal(l, u, mu, sigma, moment)**args['truncnorm'])*(mgf_gamma(moment*a1, theta, k)**args['gamma'])*(mgf_uniform(moment*a4, a, b)**args['uniform']))
+    return ((mgf_truncated_normal(l, u, mu, sigma, moment)**args['truncnorm'])*(mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform']))
     #return (mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
     
 def mgf_gamma(moment, theta, k):
