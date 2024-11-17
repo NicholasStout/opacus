@@ -20,7 +20,7 @@ from .analysis import rdp as gaussian_analysis
 
 
 class RDP_PLRVAccountant(IAccountant):
-    DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+    DEFAULT_ALPHAS = range(2,251)
 
     def __init__(self):
         super().__init__()
@@ -68,7 +68,8 @@ class RDP_PLRVAccountant(IAccountant):
                 for (args, num_steps) in self.history
             ]
         )
-        print(f"{len(alphas)}  {len(rdp)}")
+        print(self.history[0][1])
+        #print(f"{len(alphas)}  {len(rdp)}")
         eps, best_alpha = privacy_analysis.get_privacy_spent(
             orders=alphas, rdp=rdp, delta=delta
         )

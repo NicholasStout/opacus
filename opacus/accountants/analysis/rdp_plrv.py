@@ -4,39 +4,44 @@ import warnings
 from scipy.stats import norm, truncnorm, expon
 from typing import List, Tuple, Union
 from . import rdp as gaussian_analysis
+from decimal import Decimal
 
-def _compute_rdp(args, order):
-  return convert_mgf_rdp(args, order)
+def _compute_rdp(args, order, sample_rate, num_steps):
+  #print(_compute_rdp)
+  return convert_mgf_rdp(args, order, sample_rate, num_steps)
 
-def convert_mgf_rdp(args, order):
+def convert_mgf_rdp(args, order, sample_rate, num_steps):
     moment = order - 1
-    moment=args['lam']
+    #moment=args['lam']
     clip = args["max_grad_norm"]
-    return maf(args, moment)/(moment)
-    try:
-        MGF1_1 = ((1-(args['a1']*(order-1)*args['theta']))**(-args['k']))  # Gamma
-        MGF1_3 = (args['lam']/(args['lam']-args['a3']*(order-1)))  # Exponential
-        MGF1_4 = ((np.exp(args['a4']*(order-1)*args['b'])-np.exp(args['a4']*(order-1)*args['a']))/(args['a4']*(order-1)*(args['b']-args['a'])))  # Uniform
-        MGF1 = MGF1_1 * MGF1_3 * MGF1_4
+    #print(maf(args, moment)/(moment))
+    return maf(args, moment, sample_rate, num_steps)/(moment)
+#    try:
+#        MGF1_1 = ((1-(args['a1']*(order-1)*args['theta']))**(-args['k']))  # Gamma
+#        MGF1_3 = (args['lam']/(args['lam']-args['a3']*(order-1)))  # Exponential
+#        MGF1_4 = ((np.exp(args['a4']*(order-1)*args['b'])-np.exp(args['a4']*(order-1)*args['a']))/(args['a4']*(order-1)*(args['b']-args['a'])))  # Uniform
+#        MGF1 = MGF1_1 * MGF1_3 * MGF1_4
         
-        MGF2_1 = ((1-args['a1']*(-order)*args['theta'])**(-args['k']))  # Gamma
-        MGF2_3 = (args['lam']/(args['lam']-args['a3']*(-order)))  # Exponential
-        MGF2_4 = ((np.exp(args['a4']*(-order)*args['b'])-np.exp(args['a4']*(-order)*args['a']))/(args['a4']*(-order)*(args['b']-args['a'])))  # Uniform
-        MGF2 = MGF2_1 * MGF2_3 * MGF2_4
+#        MGF2_1 = ((1-args['a1']*(-order)*args['theta'])**(-args['k']))  # Gamma
+#        MGF2_3 = (args['lam']/(args['lam']-args['a3']*(-order)))  # Exponential
+#        MGF2_4 = ((np.exp(args['a4']*(-order)*args['b'])-np.exp(args['a4']*(-order)*args['a']))/(args['a4']*(-order)*(args['b']-args['a'])))  # Uniform
+#        MGF2 = MGF2_1 * MGF2_3 * MGF2_4
         
         
-        rdp_lmo_ = (1/(order-1)) * np.log((order*MGF1+(order-1)*MGF2)/(2*order-1))
+#        rdp_lmo_ = (1/(order-1)) * np.log((order*MGF1+(order-1)*MGF2)/(2*order-1))
         
-    except:
-        return math.inf
-    return rdp_lmo_
+ #   except:
+ #       return math.inf
+ #   return rdp_lmo_
     
-def maf(args, moment):
+def maf(args, moment, sample_rate, num_steps):
     #moment = args["moment"]
     #moment = args['lam']
     epsilon = args["epsilon"]
     clip = args["max_grad_norm"]
-    return math.log(M_p(args, moment*clip))
+    #print(M_p(args, moment*clip))
+    return math.log(1 +Decimal(sample_rate**2)*(M_p(args, moment*clip, num_steps)-1))
+    
     numer = (moment+1)*M_p(args, moment)+(moment*M_p(args, -1*(moment+1)))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
     try:
@@ -48,7 +53,7 @@ def maf(args, moment):
 def M_u():
     pass
 
-def M_p(args, moment):
+def M_p(args, moment, T):
     a1 = args['a1']
     a3 = args['a3']
     a4 = args['a4']
@@ -63,8 +68,9 @@ def M_p(args, moment):
     lam = args['lam']
     #print(mgf_truncated_normal(l, u, mu, sigma, moment))
     #return mgf_truncated_normal(l, u, mu, sigma, moment)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
-    return ((mgf_truncated_normal(l, u, mu, sigma, moment)**args['truncnorm'])*(mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform']))
-    #return (mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
+    #return ((mgf_truncated_normal(l, u, mu, sigma, moment)**args['truncnorm'])*(mgf_gamma(moment, theta, k)**args['gamma']))*(mgf_uniform(moment, a, b)**args['uniform']))
+    #print((mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform']))
+    return Decimal((mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform']))**T
     
 def mgf_gamma(moment, theta, k):
     if moment >= 1/theta:
@@ -112,29 +118,28 @@ def compute_rdp(args, num_steps, orders: Union[List[float], float]
     #alpha, rdp = _compute_rdp(args)
     #print(num_steps)
     if isinstance(orders, float):
-        rdp = _compute_rdp(args, orders)
+        rdp = _compute_rdp(args, orders, 1, num_steps)
     else:
-        rdp = np.array([_compute_rdp(args, order) for order in orders])
-    return rdp * num_steps
+        rdp = np.array([_compute_rdp(args, order, 1, num_steps) for order in orders])
+    return rdp
     
 def compute_rdp_subsample(args, num_steps, delta, orders: Union[List[float], float], sample_rate
 ) -> Union[List[float], float]:
     if isinstance(orders, float):
-        rdp = _compute_rdp(args, orders)
+        rdp = _compute_rdp(args, orders, sample_rate, num_steps)
     else:
-        rdp = np.array([_compute_rdp(args, order) for order in orders])
+        rdp = np.array([_compute_rdp(args, order, sample_rate, num_steps) for order in orders])
     
     rens = []
-
-    for i in range(len(rdp)):
-        eps, best_alpha = get_privacy_spent(
-            orders=orders[i], rdp=rdp[i], delta=delta
-            )
-        sigma = np.sqrt((2*np.log(1.25/delta))**2)/(float(eps)**2)
-        rens.append(gaussian_analysis._compute_rdp(sample_rate, sigma, best_alpha))
-    
+    #print(len(rdp))
+#    eps, best_alpha = get_privacy_spent(
+#        orders=orders, rdp=rdp, delta=delta
+#        )
+        #sigma = np.sqrt((2*np.log(1.25/delta))**2)/(float(eps)**2)
+        #rens.append(gaussian_analysis._compute_rdp(sample_rate, sigma, best_alpha))
+        
     np.array(rens)*num_steps
-    return np.array(rens)*num_steps
+    return np.array(rdp)
         
     
 
@@ -162,7 +167,7 @@ def get_privacy_spent(
     #orders = [orders] * len(rdp)
     orders_vec = np.atleast_1d(orders)
     rdp_vec = np.atleast_1d(rdp)
-
+    #print(rdp_vec)
     if len(orders_vec) != len(rdp_vec):
         raise ValueError(
             f"Input lists must have the same length.\n"
@@ -175,7 +180,7 @@ def get_privacy_spent(
         - (np.log(delta) + np.log(orders_vec)) / (orders_vec - 1)
         + np.log((orders_vec - 1) / orders_vec)
     )
-    
+    #print(eps)
     # special case when there is no privacy
     if np.isnan(eps).all():
         return np.inf, np.nan

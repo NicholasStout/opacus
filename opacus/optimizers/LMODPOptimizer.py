@@ -104,6 +104,7 @@ class PLRVDPOptimizer(DPOptimizer):
                 g.reshape(len(g), -1).norm(1, dim=-1) for g in self.grad_samples
             ]
             per_sample_norms = stack(per_param_norms, dim=1).norm(2, dim=1)
+            #print(self.max_grad_norm)
             per_sample_clip_factor = (
                 self.max_grad_norm / (per_sample_norms + 1e-6)
             ).clamp(max=1.0)
