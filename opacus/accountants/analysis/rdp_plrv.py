@@ -45,7 +45,7 @@ def maf(args, moment, sample_rate, num_steps):
     M = 0
     for k in range(0, moment+1):
         b = binom(moment, k)
-        term = b*(1-sample_rate)**(moment-k)*(sample_rate**k)*M_p(args, k*clip, num_steps)
+        term = b*((1-sample_rate)**(moment-k))*(sample_rate**k)*M_p(args, k*clip, num_steps)
         M=M+term
     
     return num_steps*math.log(M)

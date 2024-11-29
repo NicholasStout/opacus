@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliate*I keep fucking Fridays.
+# Copyright (c) Meta Platforms, Inc. and affiliate*.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
