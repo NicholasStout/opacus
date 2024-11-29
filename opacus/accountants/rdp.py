@@ -21,8 +21,8 @@ from .analysis import rdp as privacy_analysis
 class RDPAccountant(IAccountant):
     DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data_collector):
+        super().__init__(data_collector)
 
     def step(self, *, noise_multiplier: float, sample_rate: float):
         if len(self.history) >= 1:
@@ -42,6 +42,7 @@ class RDPAccountant(IAccountant):
 
         else:
             self.history.append((noise_multiplier, sample_rate, 1))
+        self.data_collector.entry(epsilon = self.get_epsilon(10e-10), step = self.history[0][1]+1)
 
     def get_privacy_spent(
         self, *, delta: float, alphas: Optional[List[Union[float, int]]] = None

@@ -22,8 +22,8 @@ from .analysis import rdp as gaussian_analysis
 class RDP_PLRVAccountant(IAccountant):
     DEFAULT_ALPHAS = range(2,251)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data_collector):
+        super().__init__(data_collector)
         self.args = {}
 
     def step(self, noise_multiplier, sample_rate):
@@ -44,6 +44,7 @@ class RDP_PLRVAccountant(IAccountant):
 
         else:
             self.history.append((self.args, 1))
+        #self.data_collector.entry(epsilon = self.get_epsilon(10e-10), step = self.history[0][1]+1)
 
     def get_privacy_spent(
         self, *, delta: float, alphas: Optional[List[Union[float, int]]] = None

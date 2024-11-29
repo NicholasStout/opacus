@@ -27,11 +27,11 @@ __all__ = [
 ]
 
 
-def create_accountant(mechanism: str) -> IAccountant:
+def create_accountant(data_collector, mechanism: str) -> IAccountant:
     if mechanism == "rdp":
-        return RDPAccountant()
+        return RDPAccountant(data_collector)
     if mechanism == "rdp_plrv":
-        return RDP_PLRVAccountant()
+        return RDP_PLRVAccountant(data_collector)
     elif mechanism == "gdp":
         return GaussianAccountant()
     elif mechanism == "prv":

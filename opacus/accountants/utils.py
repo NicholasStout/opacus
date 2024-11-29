@@ -54,7 +54,7 @@ def get_noise_multiplier(
         steps = int(epochs / sample_rate)
 
     eps_high = float("inf")
-    accountant = create_accountant(mechanism=accountant)
+    accountant = create_accountant(None, mechanism=accountant)
 
     sigma_low, sigma_high = 0, 10
     while eps_high > target_epsilon:

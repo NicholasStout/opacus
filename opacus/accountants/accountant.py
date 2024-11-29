@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliate*I keep fucking Fridays.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ T_state_dict = TypeVar("T_state_dict", bound=Mapping[str, Any])
 
 class IAccountant(abc.ABC):
     @abc.abstractmethod
-    def __init__(self):
+    def __init__(self, data_collector):
         self.history = []  # history of noise multiplier, sample rate, and steps
-
+        self.data_collector = data_collector
     @abc.abstractmethod
     def step(self, *, noise_multiplier: float, sample_rate: float):
         """

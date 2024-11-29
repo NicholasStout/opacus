@@ -5,6 +5,7 @@ from scipy.stats import norm, truncnorm, expon
 from typing import List, Tuple, Union
 from . import rdp as gaussian_analysis
 from decimal import Decimal
+from scipy.special import binom
 
 def _compute_rdp(args, order, sample_rate, num_steps):
   #print(_compute_rdp)
@@ -40,7 +41,14 @@ def maf(args, moment, sample_rate, num_steps):
     epsilon = args["epsilon"]
     clip = args["max_grad_norm"]
     #print(M_p(args, moment*clip))
-    return math.log(1 +Decimal(sample_rate**2)*(M_p(args, moment*clip, num_steps)-1))
+    #return math.log(1 +Decimal(sample_rate**2)*(M_p(args, moment*clip, num_steps)-1))
+    M = 0
+    for k in range(0, moment+1):
+        b = binom(moment, k)
+        term = b*(1-sample_rate)**(moment-k)*(sample_rate**k)*M_p(args, k*clip, num_steps)
+        M=M+term
+    
+    return num_steps*math.log(M)
     
     numer = (moment+1)*M_p(args, moment)+(moment*M_p(args, -1*(moment+1)))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
@@ -70,7 +78,7 @@ def M_p(args, moment, T):
     #return mgf_truncated_normal(l, u, mu, sigma, moment)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
     #return ((mgf_truncated_normal(l, u, mu, sigma, moment)**args['truncnorm'])*(mgf_gamma(moment, theta, k)**args['gamma']))*(mgf_uniform(moment, a, b)**args['uniform']))
     #print((mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform']))
-    return Decimal((mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform']))**T
+    return (mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform'])
     
 def mgf_gamma(moment, theta, k):
     if moment >= 1/theta:
@@ -126,9 +134,14 @@ def compute_rdp(args, num_steps, orders: Union[List[float], float]
 def compute_rdp_subsample(args, num_steps, delta, orders: Union[List[float], float], sample_rate
 ) -> Union[List[float], float]:
     if isinstance(orders, float):
-        rdp = _compute_rdp(args, orders, sample_rate, num_steps)
+        rdp = maf(args, orders, sample_rate, num_steps)
     else:
-        rdp = np.array([_compute_rdp(args, order, sample_rate, num_steps) for order in orders])
+        rdp = np.array([maf(args, order, sample_rate, num_steps) for order in orders])
+    
+    #if isinstance(orders, float):
+    #    rdp = _compute_rdp(args, orders, sample_rate, num_steps)
+    #else:
+    #    rdp = np.array([_compute_rdp(args, order, sample_rate, num_steps) for order in orders])
     
     rens = []
     #print(len(rdp))

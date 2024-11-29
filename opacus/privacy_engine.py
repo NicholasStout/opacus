@@ -35,6 +35,9 @@ from opacus.validators.module_validator import ModuleValidator
 from torch import nn, optim
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
+from .data_collector import DataCollector
+
+
 
 
 class PrivacyEngine:
@@ -77,7 +80,8 @@ class PrivacyEngine:
                 See :meth:`~opacus.optimizers.optimizer._generate_noise` for details.
                 When set to ``True`` requires ``torchcsprng`` to be installed
         """
-        self.accountant = create_accountant(mechanism=accountant)
+        self.data_collector = DataCollector()
+        self.accountant = create_accountant(self.data_collector, mechanism=accountant)
         self.secure_mode = secure_mode
         self.secure_rng = None
         self.dataset = None  # only used to detect switching to a different dataset
