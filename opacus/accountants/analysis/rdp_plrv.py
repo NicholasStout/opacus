@@ -74,11 +74,17 @@ def M_p(args, moment, T):
     l = args['l']
     u = args['u']
     lam = args['lam']
+    res =1
+    if args['gamma']:
+        res * mgf_gamma(moment, theta, k)
+    if args['uniform']:
+        res * mgf_uniform(moment, a, b)
+        
     #print(mgf_truncated_normal(l, u, mu, sigma, moment))
     #return mgf_truncated_normal(l, u, mu, sigma, moment)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
     #return ((mgf_truncated_normal(l, u, mu, sigma, moment)**args['truncnorm'])*(mgf_gamma(moment, theta, k)**args['gamma']))*(mgf_uniform(moment, a, b)**args['uniform']))
     #print((mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform']))
-    return (mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform'])
+    return res
     
 def mgf_gamma(moment, theta, k):
     if moment >= 1/theta:
