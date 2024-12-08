@@ -48,7 +48,7 @@ def maf(args, moment, sample_rate, num_steps):
         term = b*((1-sample_rate)**(moment-k))*(sample_rate**k)*M_p(args, k*clip, num_steps)
         M=M+term
     
-    return num_steps*math.log(M)
+    return num_steps*(math.log(M)/moment)
     
     numer = (moment+1)*M_p(args, moment)+(moment*M_p(args, -1*(moment+1)))
     denom = ((2*moment)+1)#*math.exp(moment*epsilon)
@@ -196,8 +196,8 @@ def get_privacy_spent(
 
     eps = (
         rdp_vec
-        - (np.log(delta) + np.log(orders_vec)) / (orders_vec - 1)
-        + np.log((orders_vec - 1) / orders_vec)
+        - (np.log(delta) + np.log(orders_vec+1)) / (orders_vec)
+        + np.log((orders_vec) / (orders_vec+1))
     )
     #print(eps)
     # special case when there is no privacy
