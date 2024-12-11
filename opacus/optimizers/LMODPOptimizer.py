@@ -37,32 +37,39 @@ class PLRVDPOptimizer(DPOptimizer):
         )
         
     def make_noise(self, args):
+        self.gamma = None
+        self.uniform = None
+        self.normal = None
         self.args = args
-        self.k = self.args['k']
-        self.theta = self.args['theta']
-        self.mu = self.args['mu']
-        self.sigma = self.args['sigma']
-        self.a = self.args['a']
-        self.b = self.args['b']
-        self.l = self.args['l']
-        self.u = self.args['u']
+        if 'gamma' in args.keys():
+            if args['gamma']:
+                self.k = self.args['k']
+                self.theta = self.args['theta']
+                self.gamma = Gamma(
+                    concentration = self.k, rate = self.theta
+                )
+        if 'uniform' in args.keys():
+            if args['uniform']:
+                self.a = self.args['a']
+                self.b = self.args['b']
+                self.uniform = Uniform(
+                    low = self.a, high = self.b
+                )
+        if 'truncnorm' in args.keys():
+            if args['truncnorm']:
+                self.mu = self.args['mu']
+                self.sigma = self.args['sigma']
+                self.l = self.args['l']
+                self.u = self.args['u']
+                a_transformed = (self.l - self.mu) / self.sigma 
+                b_transformed = (self.u - self.mu) / self.sigma
+                self.normal= truncnorm(
+                    a_transformed, b_transformed, loc=self.mu, scale=self.sigma
+                )
+        
         self.clip = self.args['max_grad_norm']
-        self.use_gam = self.args['gamma']
-        self.use_truncnorm = self.args['truncnorm']
-        self.use_uniform = self.args['uniform']
         #self.lam = self.args['lam']
         
-        a_transformed, b_transformed = (self.l - self.mu) / self.sigma, (self.u - self.mu) / self.sigma
-        
-        self.gamma = Gamma(
-          concentration = self.k, rate = self.theta
-          )
-        self.normal= truncnorm(
-          a_transformed, b_transformed, loc=self.mu, scale=self.sigma
-          )
-        self.uniform = Uniform(
-          low = self.a, high = self.b
-          )
         #self.expon = expon(loc=0, scale = 1/self.lam)
         #self.laplace = self.get_laplace()
     
@@ -78,12 +85,16 @@ class PLRVDPOptimizer(DPOptimizer):
             _mark_as_processed(p.summed_grad)
             
     def get_linear_combination(self):
-        gam = self.gamma.sample()
-        uni = self.uniform.sample()
-        t_norm = self.normal.rvs(size=1)[0]  
+        den = 0
+        if self.gamma is not None:
+            den += self.gamma.sample()
+        if self.uniform is not None:
+            den += self.uniform.sample()
+        if self.normal is not None:
+            den += self.normal.rvs(size=1)[0]  
         #exp = self.expon.rvs(size=1)[0]
-        #return 1/((self.args['a1']*gam)+(self.args['a3']*exp)+(self.args['a4']*uni))
-        return 1/((gam*self.use_gam))#+(uni*self.use_uniform)+(t_norm*self.use_truncnorm))
+        
+        return 1/den
 
         
     def get_laplace(self):

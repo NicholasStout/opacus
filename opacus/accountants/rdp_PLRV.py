@@ -44,8 +44,7 @@ class RDP_PLRVAccountant(IAccountant):
 
         else:
             self.history.append((self.args, 1))
-        #self.data_collector.entry(epsilon = self.get_epsilon(10e-10), step = self.history[0][1]+1)
-
+            
     def get_privacy_spent(
         self, *, delta: float, alphas: Optional[List[Union[float, int]]] = None
     ) -> Tuple[float, float]:
@@ -69,8 +68,6 @@ class RDP_PLRVAccountant(IAccountant):
                 for (args, num_steps) in self.history
             ]
         )
-        print(self.history[0][1])
-        #print(f"{len(alphas)}  {len(rdp)}")
         eps, best_alpha = privacy_analysis.get_privacy_spent(
             orders=alphas, rdp=rdp, delta=delta
         )

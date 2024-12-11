@@ -16,74 +16,25 @@ def convert_mgf_rdp(args, order, sample_rate, num_steps):
     #moment=args['lam']
     clip = args["max_grad_norm"]
     #print(maf(args, moment)/(moment))
-    return maf(args, moment, sample_rate, num_steps)/(moment)
-#    try:
-#        MGF1_1 = ((1-(args['a1']*(order-1)*args['theta']))**(-args['k']))  # Gamma
-#        MGF1_3 = (args['lam']/(args['lam']-args['a3']*(order-1)))  # Exponential
-#        MGF1_4 = ((np.exp(args['a4']*(order-1)*args['b'])-np.exp(args['a4']*(order-1)*args['a']))/(args['a4']*(order-1)*(args['b']-args['a'])))  # Uniform
-#        MGF1 = MGF1_1 * MGF1_3 * MGF1_4
-        
-#        MGF2_1 = ((1-args['a1']*(-order)*args['theta'])**(-args['k']))  # Gamma
-#        MGF2_3 = (args['lam']/(args['lam']-args['a3']*(-order)))  # Exponential
-#        MGF2_4 = ((np.exp(args['a4']*(-order)*args['b'])-np.exp(args['a4']*(-order)*args['a']))/(args['a4']*(-order)*(args['b']-args['a'])))  # Uniform
-#        MGF2 = MGF2_1 * MGF2_3 * MGF2_4
-        
-        
-#        rdp_lmo_ = (1/(order-1)) * np.log((order*MGF1+(order-1)*MGF2)/(2*order-1))
-        
- #   except:
- #       return math.inf
- #   return rdp_lmo_
+    return maf(args, moment, sample_rate, num_steps)
     
 def maf(args, moment, sample_rate, num_steps):
-    #moment = args["moment"]
-    #moment = args['lam']
-    epsilon = args["epsilon"]
     clip = args["max_grad_norm"]
-    #print(M_p(args, moment*clip))
-    #return math.log(1 +Decimal(sample_rate**2)*(M_p(args, moment*clip, num_steps)-1))
     M = 0
     for k in range(0, moment+1):
         b = binom(moment, k)
-        term = b*((1-sample_rate)**(moment-k))*(sample_rate**k)*M_p(args, k*clip, num_steps)
+        term = b*((1-sample_rate)**(moment-k))*(sample_rate**k)*M_p(args, k*clip)
         M=M+term
     
     return num_steps*(math.log(M)/moment)
     
-    numer = (moment+1)*M_p(args, moment)+(moment*M_p(args, -1*(moment+1)))
-    denom = ((2*moment)+1)#*math.exp(moment*epsilon)
-    try:
-        ret = math.log(numer/denom)
-    except:
-        ret = math.inf
-    return ret
-    
-def M_u():
-    pass
 
-def M_p(args, moment, T):
-    a1 = args['a1']
-    a3 = args['a3']
-    a4 = args['a4']
-    theta = args["theta"]
-    k = args['k']
-    mu = args['mu']
-    sigma = args['sigma']
-    a = args['a']
-    b = args['b']
-    l = args['l']
-    u = args['u']
-    lam = args['lam']
+def M_p(args, moment):
     res =1
     if args['gamma']:
-        res * mgf_gamma(moment, theta, k)
+        res *= mgf_gamma(moment, args["theta"], args['k'])
     if args['uniform']:
-        res * mgf_uniform(moment, a, b)
-        
-    #print(mgf_truncated_normal(l, u, mu, sigma, moment))
-    #return mgf_truncated_normal(l, u, mu, sigma, moment)*(mgf_gamma(moment*a1, theta, k))*mgf_uniform(moment*a4, a, b)
-    #return ((mgf_truncated_normal(l, u, mu, sigma, moment)**args['truncnorm'])*(mgf_gamma(moment, theta, k)**args['gamma']))*(mgf_uniform(moment, a, b)**args['uniform']))
-    #print((mgf_gamma(moment, theta, k)**args['gamma'])*(mgf_uniform(moment, a, b)**args['uniform']))
+        res *= mgf_uniform(moment, args['a'], args['b'])
     return res
     
 def mgf_gamma(moment, theta, k):

@@ -497,10 +497,12 @@ class PrivacyEngine:
                 sampling mechanism. Points to the same dataset object.
         """
         if "PLRV" in str(type(self.accountant)):
-          self.args = self.get_PLRV_args(target_epsilon, target_delta, epochs, max_grad_norm)
+          self.args = {}
           for key, value in kwargs.items():
             if "PLRV_args" in key:
               self.args = value
+            else:
+                raise Exception("Error: args not passed")
           
           self.args['max_grad_norm'] = max_grad_norm
           self.accountant.args = self.args
@@ -523,6 +525,7 @@ class PrivacyEngine:
             grad_sample_mode=grad_sample_mode,
             poisson_sampling=poisson_sampling,
             clipping=clipping,
+            noise_multiplier = 0,
             **kwargs,
             )
                     
@@ -651,21 +654,21 @@ class PrivacyEngine:
 
         return checkpoint
         
-    def get_PLRV_args(self, epsilon, delta, epochs, clip):
-      return {
-            "a1":0.5,
-            "a3":0.5,
-            "a4":0.5,
-            "lam":5,
-            "moment":1,
-            "theta":5,
-            'k':0.5,
-            'mu':0,
-            'sigma':0.1,
-            'a':0,
-            'b':16,
-            'u':1,
-            'l':0.1,
-            'epsilon':epsilon/epochs*1000,
-            'max_grad_norm': clip,
-        }
+#    def get_PLRV_args(self, epsilon, delta, epochs, clip):
+#      return {
+#            "a1":0.5,
+#            "a3":0.5,
+#            "a4":0.5,
+#            "lam":5,
+#            "moment":1,
+#            "theta":5,
+#            'k':0.5,
+#            'mu':0,
+#            'sigma':0.1,
+#            'a':0,
+#            'b':16,
+#            'u':1,
+#            'l':0.1,
+#            'epsilon':epsilon/epochs*1000,
+#            'max_grad_norm': clip,
+#        }
