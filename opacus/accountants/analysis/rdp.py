@@ -134,6 +134,7 @@ def _compute_log_a_for_int_alpha(q: float, sigma: float, alpha: int) -> float:
 
         s = log_coef_i + (i * i - i) / (2 * (sigma**2))
         log_a = _log_add(log_a, s)
+        #log_a = log_a+s
 
     return float(log_a)
 

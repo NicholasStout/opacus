@@ -20,7 +20,7 @@ from .analysis import rdp as gaussian_analysis
 
 
 class RDP_PLRVAccountant(IAccountant):
-    DEFAULT_ALPHAS = range(1,251)
+    DEFAULT_ALPHAS = range(1,3)
 
     def __init__(self, data_collector):
         super().__init__(data_collector)

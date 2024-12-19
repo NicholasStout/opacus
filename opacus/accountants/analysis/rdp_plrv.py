@@ -7,25 +7,32 @@ from . import rdp as gaussian_analysis
 from decimal import Decimal
 from scipy.special import binom
 
-def _compute_rdp(args, order, sample_rate, num_steps):
-  #print(_compute_rdp)
-  return convert_mgf_rdp(args, order, sample_rate, num_steps)
-
 def convert_mgf_rdp(args, order, sample_rate, num_steps):
-    moment = order - 1
-    #moment=args['lam']
     clip = args["max_grad_norm"]
-    #print(maf(args, moment)/(moment))
-    return maf(args, moment, sample_rate, num_steps)
+    return maf(args, order, sample_rate, num_steps)
     
 def maf(args, moment, sample_rate, num_steps):
     clip = args["max_grad_norm"]
     M = 0
+    theta = args['theta']
+    gk = args['k']
     for k in range(0, moment+1):
+        if k == 0:
+            rhs = 1
+        if k > 0:
+            x = k*clip
+            y = (k-1)*clip
+            A = 0.5*M_p(args, y)
+            B = (2*k)-1
+            B = (1-(0.5*(1+x*theta)**(-gk))-(0.5*(1+y*theta)**(-gk)))/B;
+            Cp=0.5*(1 + x * theta)**(-gk);
+            rhs=A+B+Cp;
+            
         b = binom(moment, k)
-        term = b*((1-sample_rate)**(moment-k))*(sample_rate**k)*M_p(args, k*clip)
+        #term = b*((1-sample_rate)**(moment-k))*(sample_rate**k)*M_p(args, k*clip)
+        term = b*((1-sample_rate)**(moment-k))*(sample_rate**k)*rhs
         M=M+term
-    
+        #print(M)
     return num_steps*(math.log(M)/moment)
     
 
@@ -33,8 +40,8 @@ def M_p(args, moment):
     res =1
     if args['gamma']:
         res *= mgf_gamma(moment, args["theta"], args['k'])
-    if args['uniform']:
-        res *= mgf_uniform(moment, args['a'], args['b'])
+    #if args['uniform']:
+    #    res *= mgf_uniform(moment, args['a'], args['b'])
     return res
     
 def mgf_gamma(moment, theta, k):
@@ -46,8 +53,10 @@ def mgf_gamma(moment, theta, k):
 def mgf_truncated_normal(l, u, mu, sigma, t):
     alpha = (l - mu) / sigma
     beta = (u - mu) / sigma
+    
     num = truncnorm.cdf(beta - sigma * t, alpha, beta, loc=mu, scale=sigma) - truncnorm.cdf(alpha - sigma * t, alpha, beta, loc=mu, scale=sigma)
     den = truncnorm.cdf(beta, alpha, beta, loc=mu, scale=sigma) - truncnorm.cdf(alpha, alpha, beta, loc=mu, scale=sigma)
+    
     return np.exp((mu * t + 0.5 * sigma ** 2 * t ** 2)/2) * num / den
     
 def mgf_expon(moment, lam):
@@ -61,6 +70,13 @@ def mgf_uniform(moment, a, b):
     n = math.exp(moment*b) - math.exp(moment*a)
     d = moment*(b-a)
     return n/d
+    
+def convert_mgf_rdp(args, order, sample_rate, num_steps):
+    clip = args["max_grad_norm"]
+    return maf(args, order, sample_rate, num_steps)
+    
+def _compute_rdp(args, order, sample_rate, num_steps):
+  return convert_mgf_rdp(args, order, sample_rate, num_steps)
     
 def compute_rdp(args, num_steps, orders: Union[List[float], float]
 ) -> Union[List[float], float]:
@@ -94,21 +110,8 @@ def compute_rdp_subsample(args, num_steps, delta, orders: Union[List[float], flo
         rdp = maf(args, orders, sample_rate, num_steps)
     else:
         rdp = np.array([maf(args, order, sample_rate, num_steps) for order in orders])
-    
-    #if isinstance(orders, float):
-    #    rdp = _compute_rdp(args, orders, sample_rate, num_steps)
-    #else:
-    #    rdp = np.array([_compute_rdp(args, order, sample_rate, num_steps) for order in orders])
-    
-    rens = []
-    #print(len(rdp))
-#    eps, best_alpha = get_privacy_spent(
-#        orders=orders, rdp=rdp, delta=delta
-#        )
-        #sigma = np.sqrt((2*np.log(1.25/delta))**2)/(float(eps)**2)
-        #rens.append(gaussian_analysis._compute_rdp(sample_rate, sigma, best_alpha))
         
-    np.array(rens)*num_steps
+   # np.array(rens)*num_steps
     return np.array(rdp)
         
     

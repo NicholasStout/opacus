@@ -19,7 +19,8 @@ from .analysis import rdp as privacy_analysis
 
 
 class RDPAccountant(IAccountant):
-    DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+    #DEFAULT_ALPHAS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+    DEFAULT_ALPHAS = range(2,60)
 
     def __init__(self, data_collector):
         super().__init__(data_collector)
